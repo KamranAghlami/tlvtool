@@ -24,3 +24,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(libtlvcpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE tlvcpp)
+
+include(GNUInstallDirs)
+
+install(TARGETS ${PROJECT_NAME}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
