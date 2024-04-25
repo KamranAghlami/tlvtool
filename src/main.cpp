@@ -151,7 +151,19 @@ int main(int argc, char *argv[])
         {
             std::string input{argv[i]};
 
-            if (!parse(input))
+            if (std::filesystem::exists(input))
+            {
+                std::ifstream file(input, std::ios::binary);
+
+                if (!file)
+                    return -1;
+
+                input = std::string(std::istreambuf_iterator<char>(file), {});
+
+                if (!parse(input))
+                    return -1;
+            }
+            else if (!parse(input))
                 return -1;
         }
 
