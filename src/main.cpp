@@ -121,10 +121,13 @@ void hex_to_bin(std::string &string)
     string.resize(write_index);
 }
 
-bool parse(std::string &string)
+bool parse(std::string &string, bool ascii = true)
 {
-    remove_invalid(string);
-    hex_to_bin(string);
+    if (ascii)
+    {
+        remove_invalid(string);
+        hex_to_bin(string);
+    }
 
     if (string.size() == 0)
         return true;
@@ -160,7 +163,7 @@ int main(int argc, char *argv[])
 
                 input = std::string(std::istreambuf_iterator<char>(file), {});
 
-                if (!parse(input))
+                if (!parse(input, false))
                     return -1;
             }
             else if (!parse(input))
