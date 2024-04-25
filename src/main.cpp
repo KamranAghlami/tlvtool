@@ -1,9 +1,45 @@
+#include <unordered_map>
+#include <filesystem>
 #include <algorithm>
 #include <cctype>
 #include <string>
 
 #include <tlvcpp/tlv_tree.h>
 #include <tlvcpp/utilities/hexdump.h>
+
+static std::unordered_map<tlvcpp::tag_t, std::string> tags;
+
+const char *parser(const tlvcpp::tag_t tag)
+{
+    const auto tag_pair = tags.find(tag);
+
+    if (tag_pair != tags.end())
+        return tag_pair->second.c_str();
+
+    static char buffer[16];
+
+    snprintf(buffer, sizeof(buffer), "0x%02x", tag);
+
+    return buffer;
+}
+
+void initialize_parser()
+{
+    std::filesystem::path home_directory;
+
+#ifdef _WIN32
+    const char *home_dir = std::getenv("USERPROFILE");
+#else
+    const char *home_dir = std::getenv("HOME");
+#endif
+
+    if (home_dir)
+        home_directory = home_dir;
+
+    std::cout << "Home directory: " << home_directory << std::endl;
+
+    tlvcpp::set_tag_parser(parser);
+}
 
 void remove_invalid(std::string &string)
 {
@@ -76,6 +112,8 @@ bool parse(std::string &string)
 
 int main(int argc, char *argv[])
 {
+    initialize_parser();
+
     if (argc > 1)
     {
         for (size_t i = 1; i < argc; i++)
