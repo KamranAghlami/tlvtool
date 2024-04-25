@@ -1,8 +1,10 @@
 #include <unordered_map>
 #include <filesystem>
+#include <fstream>
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <vector>
 
 #include <tlvcpp/tlv_tree.h>
 #include <tlvcpp/utilities/hexdump.h>
@@ -25,18 +27,47 @@ const char *parser(const tlvcpp::tag_t tag)
 
 void initialize_parser()
 {
-    std::filesystem::path home_directory;
-
 #ifdef _WIN32
     const char *home_dir = std::getenv("USERPROFILE");
 #else
     const char *home_dir = std::getenv("HOME");
 #endif
 
-    if (home_dir)
-        home_directory = home_dir;
+    if (!home_dir)
+        return;
 
-    std::cout << "Home directory: " << home_directory << std::endl;
+    auto file_path = std::filesystem::path(home_dir) / ".tlvtool";
+
+    if (!std::filesystem::exists(file_path))
+        return;
+
+    std::ifstream file(file_path, std::ios::binary);
+
+    if (!file)
+        return;
+
+    std::vector<uint8_t> buffer(std::filesystem::file_size(file_path));
+
+    if (!buffer.size() || !file.read(reinterpret_cast<char *>(buffer.data()), buffer.size()))
+        return;
+
+    file.close();
+
+    tlvcpp::tlv_tree_node root;
+
+    if (root.deserialize(buffer.data(), buffer.size()))
+    {
+        auto emplace = [](const tlvcpp::tlv_tree_node &node)
+        {
+            tags.emplace(node.data().tag(), std::string(reinterpret_cast<char *>(node.data().value()), node.data().length()));
+        };
+
+        if (root.data().tag())
+            emplace(root);
+        else
+            for (const auto &child : root.children())
+                emplace(child);
+    }
 
     tlvcpp::set_tag_parser(parser);
 }
