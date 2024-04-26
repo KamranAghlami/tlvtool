@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <vector>
+#include <sstream>
 
 #include <tlvcpp/tlv_tree.h>
 #include <tlvcpp/utilities/hexdump.h>
@@ -46,28 +46,20 @@ void initialize_parser()
     if (!file)
         return;
 
-    std::vector<uint8_t> buffer(std::filesystem::file_size(file_path));
+    std::string line;
 
-    if (!buffer.size() || !file.read(reinterpret_cast<char *>(buffer.data()), buffer.size()))
-        return;
+    while (std::getline(file, line))
+    {
+        uint32_t key;
+        char ws;
+        std::string value;
+        std::istringstream stream(line);
+
+        if (stream >> std::hex >> key && stream >> std::noskipws >> ws && std::getline(stream, value))
+            tags.emplace(key, value);
+    }
 
     file.close();
-
-    tlvcpp::tlv_tree_node root;
-
-    if (root.deserialize(buffer.data(), buffer.size()))
-    {
-        auto emplace = [](const tlvcpp::tlv_tree_node &node)
-        {
-            tags.emplace(node.data().tag(), std::string(reinterpret_cast<char *>(node.data().value()), node.data().length()));
-        };
-
-        if (root.data().tag())
-            emplace(root);
-        else
-            for (const auto &child : root.children())
-                emplace(child);
-    }
 
     tlvcpp::set_tag_parser(parser);
 }
