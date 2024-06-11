@@ -70,22 +70,22 @@ jobs:
       id: preprocess_commits_windows
       if: (success() || failure()) && matrix.os == 'windows-latest'
       run: |
-        $commitsJson = @"
+        $commits_json = @"
         ${{toJson(github.event.commits)}}
         "@
 
-        $commits = $commitsJson | ConvertFrom-Json | ForEach-Object {
-          [PSCustomObject]@{
-            message = $_.message
-            url     = $_.url
-          }
+        $commits = $commits_json | ConvertFrom-Json
+
+        $transformed = $commits | ForEach-Object {
+            [PSCustomObject]@{
+                message = $_.message
+                url     = $_.url
+            }
         }
 
-        $commitsOutput = $commits | ConvertTo-Json -Compress
-
-        echo "$commitsOutput"
-
-        echo "commits=$commitsOutput" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $result_json = $transformed | ConvertTo-Json -Compress
+        
+        echo "commits=$result_json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: GitHubAssistantBot
       if: success() || failure()
