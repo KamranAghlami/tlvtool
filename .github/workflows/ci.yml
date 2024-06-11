@@ -74,15 +74,20 @@ jobs:
         ${{toJson(github.event.commits)}}
         "@
 
-        $commits = $commitsJson | ConvertFrom-Json | ForEach-Object {
+        $commits = $commitsJson | ConvertFrom-Json
+        if ($commits.Count -eq $null) {
+          $commits = @($commits)
+        }
+
+        $commitsProcessed = $commits | ForEach-Object {
           [PSCustomObject]@{
             message = $_.message
             url     = $_.url
           }
         }
 
-        $commitsOutput = $commits | ConvertTo-Json -Compress
-        echo "commits=[$commitsOutput]" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $commitsOutput = $commitsProcessed | ConvertTo-Json -Compress
+        echo "commits=$commitsOutput" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: GitHubAssistantBot
       if: success() || failure()
