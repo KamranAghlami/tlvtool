@@ -56,7 +56,10 @@ void initialize_parser()
         std::istringstream stream(line);
 
         if (stream >> std::hex >> key && stream >> std::noskipws >> ws && std::getline(stream, value))
-            tags.emplace(key, value);
+            if (tags.contains(key))
+                tags[key] += "/" + value;
+            else
+                tags.emplace(key, value);
     }
 
     file.close();
