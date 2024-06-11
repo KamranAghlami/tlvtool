@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{matrix.os}}
 
     strategy:
       fail-fast: false
@@ -43,28 +43,29 @@ jobs:
       id: strings
       shell: bash
       run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-output-dir=${{github.workspace}}/build" >> "$GITHUB_OUTPUT"
 
     - name: Configure
       run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}
+        cmake -B ${{steps.strings.outputs.build-output-dir}}
+        -DCMAKE_CXX_COMPILER=${{matrix.cpp_compiler}}
+        -DCMAKE_C_COMPILER=${{matrix.c_compiler}}
+        -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+        -S ${{github.workspace}}
 
     - name: Build
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      run: cmake --build ${{steps.strings.outputs.build-output-dir}} --config ${{matrix.build_type}}
 
     - name: GitHubAssistantBot Preprocess
       id: preprocess_commits
-      if: success() || failure()
+      if: (success() || failure()) && matrix.os == 'ubuntu-latest'
       run: |
         commits_json=$(cat <<EOL
         ${{toJson(github.event.commits)}}
         EOL
         )
         echo "commits=$(echo "$commits_json" | jq -c '[.[] | {message: .message, url: .url}]' || echo "[]")" >> $GITHUB_OUTPUT
+
     - name: GitHubAssistantBot
       if: success() || failure()
       uses: fjogeleit/http-request-action@v1
