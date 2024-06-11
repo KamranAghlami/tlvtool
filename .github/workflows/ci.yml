@@ -73,14 +73,14 @@ jobs:
         $commitsJson = @"
         ${{toJson(github.event.commits)}}
         "@
-      
+    
         $commits = $commitsJson | ConvertFrom-Json | ForEach-Object {
           [PSCustomObject]@{
             message = $_.message
             url     = $_.url
           }
         }
-      
+    
         $commitsOutput = $commits | ConvertTo-Json -Compress
         echo "commits=$commitsOutput" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
@@ -96,7 +96,7 @@ jobs:
             "platform": "${{matrix.os}}-${{matrix.c_compiler}}",
             "build": "${{matrix.build_type}}",
             "changes": "https://github.com/${{github.repository}}/commit/${{github.sha}}",
-            "commits": ${{ (matrix.os == 'ubuntu-latest' && steps.preprocess_commits_ubuntu.outputs.commits) || (matrix.os == 'windows-latest' && steps.preprocess_commits_windows.outputs.commits) }},
+            "commits": ${{steps.preprocess_commits_ubuntu.outputs.commits || steps.preprocess_commits_windows.outputs.commits}},
             "event": "${{github.event_name}}",
             "reference": "${{github.ref_name}}",
             "report": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
